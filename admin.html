@@ -2,104 +2,98 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DriveMatch Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
-<body class="bg-slate-100">
-    <div class="max-w-2xl mx-auto py-10 px-4">
-        <div class="bg-white rounded-3xl shadow-lg p-6 mb-8 border">
-            <h1 class="text-2xl font-bold text-blue-600 mb-6 text-center">จัดการระบบรถ</h1>
+<body class="bg-slate-50 p-5">
+
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white p-6 rounded-2xl shadow mb-8">
+            <h1 class="text-2xl font-bold mb-4">ลงประกาศรถ</h1>
             <form id="uploadForm" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="brand" placeholder="ยี่ห้อ" class="p-3 border rounded-xl w-full" required>
-                    <input type="text" id="model" placeholder="รุ่น" class="p-3 border rounded-xl w-full" required>
-                </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <input type="number" id="year" placeholder="ปี" class="p-3 border rounded-xl w-full" required>
-                    <input type="number" id="price" placeholder="ราคา" class="p-3 border rounded-xl w-full" required>
-                    <input type="number" id="mileage" placeholder="ไมล์" class="p-3 border rounded-xl w-full" required>
-                </div>
-                <textarea id="description" placeholder="รายละเอียด" class="w-full p-3 border rounded-xl"></textarea>
-                <input type="file" id="imageInput" accept="image/*" class="w-full" required>
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700">ลงประกาศ</button>
+                <input type="text" id="brand" placeholder="ยี่ห้อ" class="w-full p-2 border rounded" required>
+                <input type="text" id="model" placeholder="รุ่น" class="w-full p-2 border rounded" required>
+                <input type="number" id="price" placeholder="ราคา" class="w-full p-2 border rounded" required>
+                <input type="file" id="imageInput" class="w-full" required>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">บันทึก</button>
             </form>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-lg p-6 border">
-            <h2 class="font-bold mb-4">รายการรถทั้งหมด (สำหรับลบ)</h2>
+        <div class="bg-white p-6 rounded-2xl shadow">
+            <h2 class="text-xl font-bold mb-4">รายการรถ (กดลบที่นี่)</h2>
             <div id="admin-list" class="space-y-3">
-                <p class="text-slate-400 italic">กำลังโหลดข้อมูล...</p>
+                <p>กำลังโหลด...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // ใส่รหัสของคุณ
-        const URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
-        const KEY = 'sb_publishable_1X0s_-_4gdtKUKTIBq4xMw_KQ1EA5nT';
-        const client = supabase.createClient(URL, KEY);
+        // รหัสชุดเดิมที่ใช้ได้ผล
+        const SB_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
+        const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUKTIBq4xMw_KQ1EA5nT';
+        const supa = supabase.createClient(SB_URL, SB_KEY);
 
-        // ฟังก์ชันโหลดข้อมูล
-        async function loadData() {
+        // 1. ฟังก์ชันโหลดข้อมูล
+        async function fetchCars() {
             const list = document.getElementById('admin-list');
-            const { data, error } = await client.from('cars').select('*').order('created_at', { ascending: false });
-            if (error) { list.innerHTML = "โหลดผิดพลาด: " + error.message; return; }
-            list.innerHTML = data.length ? '' : 'ยังไม่มีรถในระบบ';
+            const { data, error } = await supa.from('cars').select('*').order('created_at', { ascending: false });
+            
+            if (error) { list.innerHTML = "โหลดไม่สำเร็จ"; return; }
+            
+            list.innerHTML = "";
             data.forEach(car => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-3 bg-slate-50 border rounded-xl";
+                div.className = "flex justify-between items-center p-3 bg-gray-50 border rounded-xl";
                 div.innerHTML = `
-                    <div class="flex items-center gap-3 text-sm">
+                    <div class="flex items-center gap-3">
                         <img src="${car.image_url}" class="w-10 h-8 object-cover rounded">
-                        <strong>${car.brand} ${car.model}</strong>
+                        <span class="font-bold text-sm">${car.brand} ${car.model}</span>
                     </div>
-                    <button onclick="handleDelete(${car.id})" class="text-red-500 font-bold px-2 py-1">ลบ</button>
+                    <button onclick="window.deleteCar(${car.id})" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs">ลบ</button>
                 `;
                 list.appendChild(div);
             });
         }
 
-        // ฟังก์ชันลบ (ผูกติดกับ window เพื่อให้ปุ่มกดหาเจอแน่นอน)
-        window.handleDelete = async function(id) {
-            if (!confirm('ยืนยันลบรถคันนี้?')) return;
-            const { error } = await client.from('cars').delete().eq('id', id);
+        // 2. ฟังก์ชันลบ (ทำให้เป็น window. เพื่อให้ปุ่มหาเจอ 100%)
+        window.deleteCar = async function(id) {
+            if (!confirm('ยืนยันว่าจะลบรถคันนี้?')) return;
+            
+            const { error } = await supa.from('cars').delete().eq('id', id);
+            
             if (error) {
                 alert('ลบไม่ได้: ' + error.message);
             } else {
                 alert('ลบสำเร็จแล้ว!');
-                loadData();
+                fetchCars(); // โหลดรายการใหม่
             }
         };
 
-        // ระบบส่งฟอร์ม
+        // 3. ระบบบันทึก (ฟอร์มเดิม)
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             btn.disabled = true; btn.innerText = 'กำลังบันทึก...';
             try {
                 const img = document.getElementById('imageInput').files[0];
-                const compressed = await imageCompression(img, { maxSizeMB: 0.2, maxWidthOrHeight: 1280 });
+                const comp = await imageCompression(img, { maxSizeMB: 0.2, maxWidthOrHeight: 1280 });
                 const fName = `car-${Date.now()}.webp`;
-                await client.storage.from('car-images').upload(fName, compressed);
-                const { data: url } = client.storage.from('car-images').getPublicUrl(fName);
+                await supa.storage.from('car-images').upload(fName, comp);
+                const { data: urlData } = supa.storage.from('car-images').getPublicUrl(fName);
                 
-                await client.from('cars').insert([{
+                await supa.from('cars').insert([{
                     brand: document.getElementById('brand').value,
                     model: document.getElementById('model').value,
-                    year: parseInt(document.getElementById('year').value),
                     price: parseFloat(document.getElementById('price').value),
-                    mileage: parseFloat(document.getElementById('mileage').value),
-                    description: document.getElementById('description').value,
-                    image_url: url.publicUrl
+                    image_url: urlData.publicUrl
                 }]);
                 alert('ลงประกาศสำเร็จ!'); location.reload();
-            } catch (err) { alert('พลาด: ' + err.message); btn.disabled = false; btn.innerText = 'ลงประกาศ'; }
+            } catch (err) { alert('พลาด: ' + err.message); btn.disabled = false; btn.innerText = 'บันทึก'; }
         });
 
-        loadData();
+        fetchCars();
     </script>
 </body>
 </html>
