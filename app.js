@@ -1,8 +1,7 @@
-// ตั้งค่ากุญแจเชื่อมต่อกับ Supabase
+// 1. วาง URL และ กุญแจที่ก๊อปมา (เช็คให้ชัวร์ว่าไม่มีช่องว่างหลงมานะครับ)
 const SUPABASE_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function fetchCars() {
     const carListContainer = document.getElementById('car-list');
     
