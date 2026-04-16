@@ -8,95 +8,93 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
+<body class="bg-slate-100 font-sans">
     <div class="max-w-2xl mx-auto py-10 px-4">
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border mb-10">
-            <div class="bg-blue-600 p-8 text-white">
-                <h1 class="text-3xl font-bold">ลงประกาศรถใหม่</h1>
+        <div class="bg-white rounded-3xl shadow-lg overflow-hidden mb-8 border border-slate-200">
+            <div class="bg-blue-600 p-6 text-white text-center">
+                <h1 class="text-2xl font-bold">ระบบจัดการรถ</h1>
             </div>
-            <form id="uploadForm" class="p-8 space-y-4">
+            <form id="uploadForm" class="p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="text" id="brand" placeholder="ยี่ห้อ" class="p-3 bg-slate-50 border rounded-xl outline-none" required>
-                    <input type="text" id="model" placeholder="รุ่น" class="p-3 bg-slate-50 border rounded-xl outline-none" required>
+                    <input type="text" id="brand" placeholder="ยี่ห้อ" class="p-3 border rounded-xl outline-none w-full" required>
+                    <input type="text" id="model" placeholder="รุ่น" class="p-3 border rounded-xl outline-none w-full" required>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
-                    <input type="number" id="year" placeholder="ปี" class="p-3 bg-slate-50 border rounded-xl outline-none" required>
-                    <input type="number" id="price" placeholder="ราคา" class="p-3 bg-slate-50 border rounded-xl outline-none" required>
-                    <input type="number" id="mileage" placeholder="ไมล์" class="p-3 bg-slate-50 border rounded-xl outline-none" required>
+                    <input type="number" id="year" placeholder="ปี" class="p-3 border rounded-xl outline-none w-full" required>
+                    <input type="number" id="price" placeholder="ราคา" class="p-3 border rounded-xl outline-none w-full" required>
+                    <input type="number" id="mileage" placeholder="ไมล์" class="p-3 border rounded-xl outline-none w-full" required>
                 </div>
-                <textarea id="description" placeholder="รายละเอียด" class="w-full p-3 bg-slate-50 border rounded-xl outline-none"></textarea>
-                <input type="file" id="imageInput" accept="image/*" class="w-full p-3 border-2 border-dashed rounded-xl" required>
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition">ลงประกาศ</button>
+                <textarea id="description" placeholder="รายละเอียด" class="w-full p-3 border rounded-xl outline-none"></textarea>
+                <input type="file" id="imageInput" accept="image/*" class="w-full p-2 border-2 border-dashed rounded-xl" required>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">ลงประกาศใหม่</button>
             </form>
         </div>
-        <div class="bg-white rounded-3xl shadow-xl p-8 border">
-            <h2 class="text-2xl font-bold mb-6">จัดการรถในระบบ</h2>
-            <div id="admin-car-list" class="space-y-4">
-                <p class="text-gray-400 italic text-center">กำลังโหลดรายการรถ...</p>
+
+        <div class="bg-white rounded-3xl shadow-lg p-6 border border-slate-200">
+            <h2 class="text-xl font-bold mb-4">รายการรถและปุ่มลบ</h2>
+            <div id="admin-car-list" class="space-y-3">
+                <p class="text-center text-slate-400">กำลังโหลด...</p>
             </div>
         </div>
     </div>
 
     <script>
-        // --- ตรวจสอบรหัสกุญแจตรงนี้อีกครั้งครับ ---
+        // ใช้รหัสของคุณที่ยืนยันว่าถูกต้อง
         const SB_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
-        const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT'; // มั่นใจว่ากุญแจนี้ถูกต้องนะครับ
-        const supaClient = supabase.createClient(SB_URL, SB_KEY);
+        const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUKTIBq4xMw_KQ1EA5nT';
+        const supa = supabase.createClient(SB_URL, SB_KEY);
 
-        async function fetchCars() {
-            const listDiv = document.getElementById('admin-car-list');
-            try {
-                const { data, error } = await supaClient.from('cars').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                listDiv.innerHTML = data.length ? '' : 'ยังไม่มีรถในระบบ';
-                data.forEach(car => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between p-4 bg-slate-50 rounded-xl border";
-                    div.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <img src="${car.image_url}" class="w-16 h-12 object-cover rounded-lg">
-                            <div><p class="font-bold text-sm">${car.brand} ${car.model}</p></div>
-                        </div>
-                        <button onclick="deleteCar(${car.id})" class="text-red-500 font-bold hover:bg-red-50 px-3 py-1 rounded-lg">ลบ</button>
-                    `;
-                    listDiv.appendChild(div);
-                });
-            } catch (err) {
-                listDiv.innerHTML = `<p class="text-red-500">โหลดไม่สำเร็จ: ${err.message}</p>`;
-            }
+        async function loadCars() {
+            const list = document.getElementById('admin-car-list');
+            const { data, error } = await supa.from('cars').select('*').order('created_at', { ascending: false });
+            if (error) { list.innerHTML = "เกิดข้อผิดพลาด: " + error.message; return; }
+            list.innerHTML = data.length ? '' : 'ไม่มีรถในระบบ';
+            data.forEach(car => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-3 bg-slate-50 rounded-xl border";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${car.image_url}" class="w-12 h-9 object-cover rounded">
+                        <span class="text-sm font-bold">${car.brand} ${car.model}</span>
+                    </div>
+                    <button onclick="removeCar(${car.id})" class="text-red-500 font-bold px-2 py-1 hover:bg-red-50 rounded-lg">ลบ</button>
+                `;
+                list.appendChild(div);
+            });
         }
 
-        window.deleteCar = async function(id) {
+        window.removeCar = async function(id) {
             if (!confirm('ยืนยันการลบ?')) return;
-            const { error } = await supaClient.from('cars').delete().eq('id', id);
+            const { error } = await supa.from('cars').delete().eq('id', id);
             if (error) alert('ลบไม่ได้: ' + error.message);
-            else { alert('ลบสำเร็จ!'); fetchCars(); }
+            else { alert('ลบสำเร็จ!'); loadCars(); }
         }
 
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
+            btn.disabled = true; btn.innerText = 'กำลังบันทึก...';
             try {
                 const img = document.getElementById('imageInput').files[0];
                 const compressed = await imageCompression(img, { maxSizeMB: 0.2, maxWidthOrHeight: 1280 });
                 const fName = `car-${Date.now()}.webp`;
-                await supaClient.storage.from('car-images').upload(fName, compressed);
-                const { data: urlData } = supaClient.storage.from('car-images').getPublicUrl(fName);
-                await supaClient.from('cars').insert([{
+                await supa.storage.from('car-images').upload(fName, compressed);
+                const { data: url } = supa.storage.from('car-images').getPublicUrl(fName);
+                
+                await supa.from('cars').insert([{
                     brand: document.getElementById('brand').value,
                     model: document.getElementById('model').value,
                     year: parseInt(document.getElementById('year').value),
                     price: parseFloat(document.getElementById('price').value),
                     mileage: parseFloat(document.getElementById('mileage').value),
                     description: document.getElementById('description').value,
-                    image_url: urlData.publicUrl
+                    image_url: url.publicUrl
                 }]);
                 alert('ลงประกาศสำเร็จ!'); location.reload();
-            } catch (err) { alert('พลาด: ' + err.message); btn.disabled = false; btn.innerHTML = 'ลงประกาศ'; }
+            } catch (err) { alert('ผิดพลาด: ' + err.message); btn.disabled = false; btn.innerText = 'ลงประกาศใหม่'; }
         });
 
-        fetchCars();
+        loadCars();
     </script>
 </body>
 </html>
