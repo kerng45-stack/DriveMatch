@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveMatch Admin - เพิ่มรถใหม่</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <div class="max-w-2xl mx-auto py-10 px-4">
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+            <div class="bg-blue-600 p-8 text-white">
+                <h1 class="text-3xl font-bold">ลงประกาศรถใหม่</h1>
+                <p class="opacity-80 mt-2">ระบบจะย่อรูปให้อัตโนมัติเพื่อประหยัดพื้นที่และโหลดไว</p>
+            </div>
+
+            <form id="uploadForm" class="p-8 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">ยี่ห้อรถ</label>
+                        <input type="text" id="brand" placeholder="เช่น Toyota" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">รุ่นรถ</label>
+                        <input type="text" id="model" placeholder="เช่น Camry" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">ปีรถ (ค.ศ.)</label>
+                        <input type="number" id="year" placeholder="2022" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">ราคา (บาท)</label>
+                        <input type="number" id="price" placeholder="1290000" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">เลขไมล์ (กม.)</label>
+                        <input type="number" id="mileage" placeholder="35000" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">รายละเอียดรถ</label>
+                    <textarea id="description" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-50 border focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="รถมือเดียว ประวัติศูนย์..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">เลือกรูปถ่ายรถ</label>
+                    <div class="relative">
+                        <input type="file" id="imageInput" accept="image/*" class="w-full p-4 border-2 border-dashed rounded-2xl text-slate-500 cursor-pointer hover:bg-slate-50 transition" required>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 transition transform active:scale-95">
+                    บันทึกและลงประกาศ
+                </button>
+            </form>
+        </div>
+        <div class="text-center mt-6">
+            <a href="index.html" class="text-slate-400 hover:text-blue-600 transition text-sm">← กลับหน้าหลัก</a>
+        </div>
+    </div>
+
+    <script>
+        // ใส่กุญแจของคุณที่นี่ (เหมือนใน app.js)
+        const SB_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
+        const SB_KEY = 'วาง_anon_public_key_ของคุณตรงนี้';
+        const db = supabase.createClient(https://hidzzxxixaevdrnruzsm.supabase.co, sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT);
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'กำลังบีบอัดรูปและอัปโหลด...';
+
+            try {
+                const imgFile = document.getElementById('imageInput').files[0];
+                
+                // --- 1. ระบบย่อรูปอัตโนมัติ (Client-Side Compression) ---
+                const options = {
+                    maxSizeMB: 0.2,          // บีบให้เหลือประมาณ 200KB
+                    maxWidthOrHeight: 1280, // กว้างสูงสุด 1280px
+                    useWebWorker: true
+                }
+                const compressedFile = await imageCompression(imgFile, options);
+                
+                // --- 2. อัปโหลดรูปไปที่ Storage ---
+                const fileName = `car-${Date.now()}.webp`; // แปลงเป็น .webp ทันที
+                const { data: uploadData, error: uploadError } = await db.storage
+                    .from('car-images')
+                    .upload(fileName, compressedFile);
+
+                if (uploadError) throw uploadError;
+
+                // ดึง URL ของรูปออกมา
+                const { data: urlData } = db.storage.from('car-images').getPublicUrl(fileName);
+                const publicUrl = urlData.publicUrl;
+
+                // --- 3. บันทึกข้อมูลลงตาราง cars ---
+                const { error: insertError } = await db.from('cars').insert([{
+                    brand: document.getElementById('brand').value,
+                    model: document.getElementById('model').value,
+                    year: parseInt(document.getElementById('year').value),
+                    price: parseFloat(document.getElementById('price').value),
+                    mileage: parseFloat(document.getElementById('mileage').value),
+                    description: document.getElementById('description').value,
+                    image_url: publicUrl
+                }]);
+
+                if (insertError) throw insertError;
+
+                alert('ลงประกาศสำเร็จ!');
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = 'บันทึกและลงประกาศ';
+            }
+        });
+    </script>
+</body>
+</html>
