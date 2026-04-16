@@ -4,60 +4,100 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DriveMatch Admin - จัดการรถ</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Browser Image Compression -->
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
+<body class="bg-slate-50 font-sans text-slate-900 antialiased">
 
-<div class="max-w-2xl mx-auto py-10 px-4">
-    <!-- ฟอร์มเพิ่มรถ -->
+<div class="max-w-2xl mx-auto py-8 md:py-12 px-4">
+    <!-- ส่วนหัว: ฟอร์มเพิ่มรถ -->
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 mb-10">
-        <div class="bg-blue-600 p-8 text-white">
-            <h1 class="text-3xl font-bold">🚗 ลงประกาศรถใหม่</h1>
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 md:p-8 text-white">
+            <h1 class="text-3xl font-bold flex items-center gap-3">
+                <span>🚗</span> ลงประกาศรถใหม่
+            </h1>
+            <p class="text-blue-100 text-sm mt-1">กรอกข้อมูลรถและอัปโหลดรูปภาพ</p>
         </div>
-        <form id="uploadForm" class="p-8 space-y-6">
+        <form id="uploadForm" class="p-6 md:p-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="text" id="brand" placeholder="ยี่ห้อ (เช่น Toyota)" class="w-full px-4 py-3 rounded-xl bg-slate-50 border outline-none focus:ring-2 focus:ring-blue-300" required>
-                <input type="text" id="model" placeholder="รุ่น (เช่น Camry)" class="w-full px-4 py-3 rounded-xl bg-slate-50 border outline-none focus:ring-2 focus:ring-blue-300" required>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">ยี่ห้อ</label>
+                    <input type="text" id="brand" placeholder="เช่น Toyota" 
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">รุ่น</label>
+                    <input type="text" id="model" placeholder="เช่น Camry" 
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition" required>
+                </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="number" id="price" placeholder="ราคา (บาท)" class="w-full px-4 py-3 rounded-xl bg-slate-50 border outline-none focus:ring-2 focus:ring-blue-300" required>
-                <input type="file" id="imageInput" accept="image/*" class="w-full p-2 border-2 border-dashed border-slate-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">ราคา (บาท)</label>
+                    <input type="number" id="price" placeholder="0" min="0" step="1000"
+                           class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">รูปภาพ</label>
+                    <input type="file" id="imageInput" accept="image/*" 
+                           class="w-full p-2 border-2 border-dashed border-slate-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer" required>
+                </div>
             </div>
-            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition active:scale-95">
+            <button type="submit" id="submitBtn" 
+                    class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-blue-700 transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed">
                 💾 บันทึกข้อมูล
             </button>
         </form>
     </div>
 
-    <!-- รายการรถในระบบ -->
-    <div class="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
-        <h2 class="text-2xl font-bold mb-6">📋 จัดการรถในระบบ</h2>
-        <div id="admin-car-list" class="space-y-4">
-            <p class="text-slate-400 italic text-center">กำลังโหลดข้อมูล...</p>
+    <!-- ส่วนล่าง: รายการรถ -->
+    <div class="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-slate-100">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <span>📋</span> จัดการรถในระบบ
+            </h2>
+            <button onclick="fetchCars()" class="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition flex items-center gap-1">
+                <span>🔄</span> โหลดใหม่
+            </button>
         </div>
+        <div id="admin-car-list" class="space-y-4">
+            <p class="text-slate-400 italic text-center py-8">กำลังโหลดข้อมูล...</p>
+        </div>
+        <p class="text-xs text-slate-400 mt-4 border-t pt-4 text-center">
+            ⚡ หมายเหตุ: หากกดลบแล้วข้อมูลไม่หายไป ให้ตรวจสอบ RLS Policy ใน Supabase
+        </p>
     </div>
 </div>
 
 <script>
     (function(){
-        // ใช้ตัวแปรแบบปลอดภัย
+        // ---------- ค่าคงที่ Supabase ----------
         const SB_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
         const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUKTIBq4xMw_KQ1EA5nT';
         
-        // ตรวจสอบว่า Supabase โหลดมาครบหรือไม่
+        // ตรวจสอบว่า Supabase โหลดมาครบ
         if (typeof supabase === 'undefined') {
-            document.getElementById('admin-car-list').innerHTML = '<p class="text-red-500">ไม่สามารถโหลด Supabase library ได้</p>';
+            document.getElementById('admin-car-list').innerHTML = 
+                '<p class="text-red-500 text-center py-8">❌ ไม่สามารถโหลด Supabase library ได้ กรุณารีเฟรช</p>';
             throw new Error('Supabase library missing');
         }
         
+        // สร้าง client
         const supa = supabase.createClient(SB_URL, SB_KEY);
-
-        // ฟังก์ชันดึงข้อมูลรถ
+        
+        // ---------- ฟังก์ชันช่วยเหลือ ----------
+        function formatPrice(price) {
+            return Number(price).toLocaleString('th-TH');
+        }
+        
+        // ---------- ดึงข้อมูลรถจากฐานข้อมูล ----------
         async function fetchCars() {
             const listDiv = document.getElementById('admin-car-list');
-            listDiv.innerHTML = '<p class="text-slate-400 italic text-center">กำลังโหลด...</p>';
+            listDiv.innerHTML = '<p class="text-slate-400 italic text-center py-8">⏳ กำลังโหลดข้อมูล...</p>';
             
             try {
                 const { data, error } = await supa
@@ -65,76 +105,134 @@
                     .select('*')
                     .order('created_at', { ascending: false });
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase fetch error:', error);
+                    throw error;
+                }
                 
+                // กรณีไม่มีข้อมูล
                 if (!data || data.length === 0) {
                     listDiv.innerHTML = '<p class="text-center text-slate-500 py-8">🚫 ยังไม่มีรถในระบบ</p>';
                     return;
                 }
                 
+                // สร้าง HTML สำหรับแต่ละคัน
                 listDiv.innerHTML = '';
                 data.forEach(car => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-md transition";
-                    div.innerHTML = `
+                    const card = document.createElement('div');
+                    card.className = "flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-md transition";
+                    
+                    // ตรวจสอบว่า image_url มีหรือไม่
+                    const imgUrl = car.image_url || 'https://via.placeholder.com/160x120?text=No+Image';
+                    
+                    card.innerHTML = `
                         <div class="flex items-center gap-4">
-                            <img src="${car.image_url}" alt="${car.brand}" class="w-16 h-12 object-cover rounded-lg shadow-sm bg-white">
+                            <img src="${imgUrl}" alt="${car.brand}" 
+                                 class="w-16 h-12 object-cover rounded-lg shadow-sm bg-white border border-slate-200"
+                                 onerror="this.src='https://via.placeholder.com/160x120?text=No+Image'">
                             <div>
                                 <p class="font-bold text-slate-800">${car.brand} ${car.model}</p>
-                                <p class="text-blue-600 text-xs font-bold">฿${Number(car.price).toLocaleString()}</p>
+                                <p class="text-blue-600 text-sm font-bold">฿${formatPrice(car.price)}</p>
                             </div>
                         </div>
-                        <button class="delete-btn bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition" data-id="${car.id}">
-                            🗑️ ลบรถ
+                        <button class="delete-btn bg-red-100 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition" 
+                                data-id="${car.id}">
+                            🗑️ ลบ
                         </button>
                     `;
-                    listDiv.appendChild(div);
-                });
-                
-                // ผูก event listener สำหรับปุ่มลบทั้งหมด
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const id = e.currentTarget.dataset.id;
-                        if (!confirm('⚠️ ยืนยันการลบรถคันนี้ออกจากระบบ?')) return;
-                        
-                        const { error } = await supa.from('cars').delete().eq('id', id);
-                        if (error) {
-                            alert('❌ ลบไม่สำเร็จ: ' + error.message);
-                        } else {
-                            alert('✅ ลบข้อมูลเรียบร้อยแล้ว!');
-                            fetchCars(); // โหลดใหม่
-                        }
-                    });
+                    listDiv.appendChild(card);
                 });
                 
             } catch (err) {
                 console.error('Fetch error:', err);
-                listDiv.innerHTML = `<p class="text-red-500 text-center py-4">❌ โหลดไม่สำเร็จ: ${err.message}</p>`;
+                listDiv.innerHTML = `<p class="text-red-500 text-center py-8">❌ โหลดไม่สำเร็จ: ${err.message}</p>`;
             }
         }
-
-        // ฟอร์มบันทึกข้อมูล
+        
+        // ---------- จัดการลบผ่าน Event Delegation (วิธีที่เสถียรที่สุด) ----------
+        document.getElementById('admin-car-list').addEventListener('click', async (e) => {
+            // หาปุ่มลบที่ถูกคลิก (รองรับการคลิกที่ไอคอนหรือข้อความข้างใน)
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (!deleteBtn) return; // ไม่ใช่ปุ่มลบ
+            
+            const id = deleteBtn.dataset.id;
+            if (!id) {
+                console.warn('ไม่พบ data-id บนปุ่มลบ');
+                return;
+            }
+            
+            // ยืนยันการลบ
+            if (!confirm(`⚠️ ยืนยันการลบรถคันนี้? (ID: ${id})`)) return;
+            
+            console.log(`🗑️ กำลังลบรถ ID: ${id} (type: ${typeof id})`);
+            
+            // แสดงสถานะระหว่างลบ
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '⏳ กำลังลบ...';
+            
+            try {
+                // ตรวจสอบชนิดของ ID ในฐานข้อมูล: หากเป็น int8 ให้แปลงเป็น number
+                // ส่วนใหญ่ Supabase จะรับ string ที่เป็นตัวเลขได้ แต่บางกรณีต้องแปลง
+                const idToDelete = isNaN(id) ? id : parseInt(id, 10);
+                
+                const { error } = await supa
+                    .from('cars')
+                    .delete()
+                    .eq('id', idToDelete);
+                
+                if (error) {
+                    console.error('Delete error:', error);
+                    throw error;
+                }
+                
+                alert('✅ ลบข้อมูลเรียบร้อยแล้ว!');
+                // โหลดรายการใหม่
+                fetchCars();
+                
+            } catch (err) {
+                console.error('Delete failed:', err);
+                alert(`❌ ลบไม่สำเร็จ: ${err.message}\n\nโปรดตรวจสอบ:\n- RLS Policy ใน Supabase\n- สิทธิ์ในการลบ`);
+                // คืนค่าปุ่ม
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalText;
+            }
+        });
+        
+        // ---------- จัดการฟอร์มบันทึกข้อมูล ----------
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const btn = document.getElementById('submitBtn');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '⏳ กำลังบันทึก...';
+            btn.innerHTML = '⏳ กำลังอัปโหลด...';
             
             try {
+                // 1. รับไฟล์
                 const fileInput = document.getElementById('imageInput');
                 const file = fileInput.files[0];
                 if (!file) throw new Error('กรุณาเลือกไฟล์รูปภาพ');
                 
-                // บีบอัดรูปภาพ
+                // 2. รับค่าข้อมูล
+                const brand = document.getElementById('brand').value.trim();
+                const model = document.getElementById('model').value.trim();
+                const priceInput = document.getElementById('price');
+                const price = parseFloat(priceInput.value);
+                
+                if (!brand || !model) throw new Error('กรุณากรอกยี่ห้อและรุ่น');
+                if (isNaN(price) || price <= 0) throw new Error('กรุณากรอกราคาที่ถูกต้อง');
+                
+                // 3. บีบอัดรูปภาพ
                 const options = {
                     maxSizeMB: 0.2,
                     maxWidthOrHeight: 1280,
-                    useWebWorker: true
+                    useWebWorker: true,
+                    fileType: 'image/webp'
                 };
                 const compressedFile = await imageCompression(file, options);
                 
-                // อัปโหลดไปยัง Storage
+                // 4. อัปโหลดไปยัง Storage
                 const fileName = `car-${Date.now()}.webp`;
                 const { error: uploadError } = await supa.storage
                     .from('car-images')
@@ -143,22 +241,17 @@
                         upsert: false
                     });
                     
-                if (uploadError) throw uploadError;
+                if (uploadError) {
+                    console.error('Upload error:', uploadError);
+                    throw new Error('อัปโหลดรูปไม่สำเร็จ: ' + uploadError.message);
+                }
                 
-                // รับ URL สาธารณะ
+                // 5. รับ URL สาธารณะ
                 const { data: { publicUrl } } = supa.storage
                     .from('car-images')
                     .getPublicUrl(fileName);
                 
-                // บันทึกข้อมูลลงตาราง cars
-                const brand = document.getElementById('brand').value.trim();
-                const model = document.getElementById('model').value.trim();
-                const price = parseFloat(document.getElementById('price').value);
-                
-                if (!brand || !model || isNaN(price)) {
-                    throw new Error('กรุณากรอกข้อมูลให้ครบถ้วน');
-                }
-                
+                // 6. บันทึกลงตาราง cars
                 const { error: insertError } = await supa
                     .from('cars')
                     .insert([{
@@ -169,7 +262,10 @@
                         created_at: new Date().toISOString()
                     }]);
                     
-                if (insertError) throw insertError;
+                if (insertError) {
+                    console.error('Insert error:', insertError);
+                    throw new Error('บันทึกข้อมูลไม่สำเร็จ: ' + insertError.message);
+                }
                 
                 alert('✅ บันทึกข้อมูลสำเร็จ!');
                 document.getElementById('uploadForm').reset();
@@ -183,9 +279,13 @@
                 btn.innerHTML = originalText;
             }
         });
-
-        // เริ่มต้นโหลดข้อมูลเมื่อหน้าเว็บพร้อม
+        
+        // ---------- ทำให้ fetchCars ใช้จาก global ได้ (สำหรับปุ่มโหลดใหม่) ----------
+        window.fetchCars = fetchCars;
+        
+        // เริ่มต้นโหลดข้อมูล
         fetchCars();
+        
     })();
 </script>
 </body>
