@@ -70,7 +70,7 @@
         const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT'; 
 
         // สร้างตัวแปรเชื่อมต่อ โดยใช้ชื่อ supaClient เพื่อไม่ให้ตีกับระบบ
-        const supaClient = supabase.createClient(https://hidzzxxixaevdrnruzsm.supabase.co, sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT);
+        const supaClient = supabase.createClient(SB_URL, SB_KEY);
 
         // --- ส่วนที่ 2: ระบบจัดการการส่งฟอร์ม ---
         document.getElementById('uploadForm').addEventListener('submit', async (event) => {
