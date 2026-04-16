@@ -1,6 +1,6 @@
 // 1. ตั้งค่ากุญแจ (ใช้ Publishable key ที่ก๊อปมาใหม่นะครับ)
 const SB_URL = 'https://hidzzxxixaevdrnruzsm.supabase.co';
-const SB_KEY = 'วาง_Publishable_key_ที่ขึ้นต้นด้วย_sb_publishable_ตรงนี้';
+const SB_KEY = 'sb_publishable_1X0s_-_4gdtKUkTIBq4xMw_KQ1EA5nT';
 
 // 2. ใช้ชื่อตัวแปร dMatch_db เพื่อป้องกันชื่อซ้ำกับระบบ
 const dMatch_db = supabase.createClient(SB_URL, SB_KEY);
