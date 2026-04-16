@@ -92,7 +92,7 @@
                 // --- 2. อัปโหลดรูปไปที่ Storage ---
                 const fileName = `car-${Date.now()}.webp`; // แปลงเป็น .webp ทันที
                 const { data: uploadData, error: uploadError } = await db.storage
-                    .from('CAR-IMAGES')
+                    .from('car-images')
                     .upload(fileName, compressedFile);
 
                 if (uploadError) throw uploadError;
