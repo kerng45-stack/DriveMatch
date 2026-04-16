@@ -98,7 +98,7 @@
                 if (uploadError) throw uploadError;
 
                 // ดึง URL ของรูปออกมา
-                const { data: urlData } = db.storage.from('CAR-IMAGES').getPublicUrl(fileName);
+                const { data: urlData } = db.storage.from('car-images').getPublicUrl(fileName);
                 const publicUrl = urlData.publicUrl;
 
                 // --- 3. บันทึกข้อมูลลงตาราง cars ---
